@@ -1,8 +1,8 @@
 use sqlx::postgres::PgPoolOptions;
 
-mod db;
+mod infrastructure;
 
-use crate::db::pg;
+use crate::infrastructure::db::pg;
 
 #[actix_rt::main]
 async fn main() -> Result<(), sqlx::Error> {
