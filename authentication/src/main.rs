@@ -1,7 +1,9 @@
 use sqlx::postgres::PgPoolOptions;
 
+mod domain;
 mod infrastructure;
 
+//use crate::domain;
 use crate::infrastructure::db;
 
 #[actix_rt::main]
@@ -28,6 +30,8 @@ async fn main() -> Result<(), sqlx::Error> {
         .await?;
 
     println!("{:?}", result.result);
+
+    let user = domain::user::User::new(String::from("test"), String::from("test@test.com"));
 
     Ok(())
 }
