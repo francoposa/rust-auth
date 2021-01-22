@@ -22,10 +22,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let db_url = &config.url();
-    let pg_pool = PgPoolOptions::new().connect(db_url).await?;
+    let conn_pool = PgPoolOptions::new().connect(db_url).await?;
 
     let result = sqlx::query_as!(SelectIntResult, "SELECT 1 AS result")
-        .fetch_one(&pg_pool)
+        .fetch_one(&conn_pool)
         .await?;
 
     println!("{:?}", result.result);
@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let user = domain::user::User::new(String::from("test"), String::from("test@test.com"));
 
     let user_repo: Box<dyn domain::user_repo::UserRepo> =
-        Box::new(db::postgres::user_repo::PGUserRepo {});
+        Box::new(db::postgres::user_repo::PGUserRepo { conn_pool });
 
     user_repo.create(user);
 

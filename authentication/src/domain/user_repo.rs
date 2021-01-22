@@ -1,8 +1,10 @@
 use crate::domain::user::User;
+use async_trait::async_trait;
 use std::fmt;
 
+#[async_trait]
 pub trait UserRepo {
-    fn create(&self, user: User) -> Result<User, UserRepoError>;
+    async fn create(&self, user: User) -> sqlx::Result<()>;
 }
 
 #[derive(Debug)]
