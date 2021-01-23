@@ -12,7 +12,7 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(username: String, email: String) -> User {
+    pub fn new(username: String, email: String) -> Self {
         let now = Utc::now();
         User {
             id: Uuid::new_v4(),

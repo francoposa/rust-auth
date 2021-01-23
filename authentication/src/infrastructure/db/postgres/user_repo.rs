@@ -7,19 +7,20 @@ use sqlx;
 use sqlx::postgres::PgPool;
 
 pub struct PGUserRepo {
-    conn_pool: PgPool,
+    pub conn_pool: PgPool,
 }
 
 impl PGUserRepo {
-    fn new(conn_pool: PgPool) -> PGUserRepo {
+    fn new(conn_pool: PgPool) -> Self {
         PGUserRepo { conn_pool }
     }
 }
 
 #[async_trait]
 impl UserRepo for PGUserRepo {
-    async fn create(&self, user: User) -> sqlx::Result<()> {
-        let result = sqlx::query!(
+    async fn create(&self, user: User) -> Result<User, UserRepoError> {
+        let result = sqlx::query_as!(
+            User,
             "INSERT INTO authn_user (
 	        id, username, email, password, enabled, created_at, updated_at
             )
@@ -28,7 +29,7 @@ impl UserRepo for PGUserRepo {
             user.id,
             user.username,
             user.email,
-            "",
+            "", // TODO password hashing
             user.enabled,
             user.created_at,
             user.updated_at,
@@ -36,6 +37,17 @@ impl UserRepo for PGUserRepo {
         .fetch_one(&self.conn_pool)
         .await;
 
-        result
+        match result {
+            Ok(created_user) => Ok(created_user),
+            Err(e) => Err(UserRepoError::from(e)),
+        }
+    }
+}
+
+impl From<sqlx::Error> for UserRepoError {
+    fn from(cause: sqlx::Error) -> Self {
+        UserRepoError::UserRepoError {
+            message: format!("{}", cause),
+        }
     }
 }
