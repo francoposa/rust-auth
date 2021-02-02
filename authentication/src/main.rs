@@ -1,9 +1,10 @@
+use sodiumoxide::crypto::pwhash::argon2id13;
 use sqlx::postgres::PgPoolOptions;
 use std::error::Error;
 
 mod domain;
 mod infrastructure;
-
+use crate::infrastructure::crypto;
 use crate::infrastructure::db;
 
 #[actix_rt::main]
@@ -20,9 +21,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         connect_timeout_seconds: 5,
         ssl_mode: String::from("disable"),
     };
-
     let db_url = &config.url();
     let conn_pool = PgPoolOptions::new().connect(db_url).await?;
+
+    sodiumoxide::init().unwrap();
 
     let result = sqlx::query_as!(SelectIntResult, "SELECT 1 AS result")
         .fetch_one(&conn_pool)
