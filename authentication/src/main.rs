@@ -8,7 +8,8 @@ use crate::infrastructure::db;
 
 #[actix_rt::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    println!("Hello, world!");
+    sodiumoxide::init().unwrap();
+    let hasher = Box::new(crypto::hasher::ArgonHasher {});
 
     let config = db::postgres::config::Config {
         host: String::from("localhost"),
@@ -23,26 +24,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let db_url = &config.url();
     let conn_pool = PgPoolOptions::new().connect(db_url).await?;
 
-    sodiumoxide::init().unwrap();
-
-    let result = sqlx::query_as!(SelectIntResult, "SELECT 1 AS result")
-        .fetch_one(&conn_pool)
-        .await?;
-
-    println!("{:?}", result.result);
-
-    let user = domain::user::User::new(String::from("test"), String::from("test@test.com"));
-    let hasher = Box::new(crypto::hasher::ArgonHasher {});
     let user_repo: Box<dyn domain::user_repo::UserRepo> =
         Box::new(db::postgres::user_repo::PGUserRepo::new(conn_pool, hasher));
 
+    let user = domain::user::User::new(String::from("test"), String::from("test@test.com"));
     let created_user = user_repo.create(user, String::from("test_pass")).await;
     println!("{:?}", created_user.unwrap());
 
     Ok(())
-}
-
-#[derive(Debug)]
-struct SelectIntResult {
-    result: Option<i32>,
 }
