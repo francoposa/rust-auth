@@ -4,7 +4,7 @@ use std::fmt;
 
 #[async_trait]
 pub trait UserRepo {
-    async fn create(&self, user: User) -> Result<User, UserRepoError>;
+    async fn create(&self, user: User, password: String) -> Result<User, UserRepoError>;
 }
 
 #[derive(Debug)]

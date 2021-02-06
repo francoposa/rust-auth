@@ -1,4 +1,5 @@
 use crate::domain::{
+    hasher::{Hasher, HasherError},
     user::User,
     user_repo::{UserRepo, UserRepoError},
 };
@@ -7,18 +8,20 @@ use sqlx;
 use sqlx::postgres::PgPool;
 
 pub struct PGUserRepo {
-    pub conn_pool: PgPool,
+    conn_pool: PgPool,
+    hasher: Box<dyn Hasher + Sync + Send>,
 }
 
 impl PGUserRepo {
-    fn new(conn_pool: PgPool) -> Self {
-        PGUserRepo { conn_pool }
+    pub fn new(conn_pool: PgPool, hasher: Box<dyn Hasher + Sync + Send>) -> Self {
+        PGUserRepo { conn_pool, hasher }
     }
 }
 
 #[async_trait]
 impl UserRepo for PGUserRepo {
-    async fn create(&self, user: User) -> Result<User, UserRepoError> {
+    async fn create(&self, user: User, password: String) -> Result<User, UserRepoError> {
+        let hashed_password: String = self.hasher.hash(password)?;
         let result = sqlx::query_as!(
             User,
             "INSERT INTO authn_user (
@@ -29,7 +32,7 @@ impl UserRepo for PGUserRepo {
             user.id,
             user.username,
             user.email,
-            "", // TODO password hashing
+            hashed_password,
             user.enabled,
             user.created_at,
             user.updated_at,
@@ -46,6 +49,14 @@ impl UserRepo for PGUserRepo {
 
 impl From<sqlx::Error> for UserRepoError {
     fn from(cause: sqlx::Error) -> Self {
+        UserRepoError::UserRepoError {
+            message: format!("{}", cause),
+        }
+    }
+}
+
+impl From<HasherError> for UserRepoError {
+    fn from(cause: HasherError) -> Self {
         UserRepoError::UserRepoError {
             message: format!("{}", cause),
         }

@@ -1,4 +1,3 @@
-use sodiumoxide::crypto::pwhash::argon2id13;
 use sqlx::postgres::PgPoolOptions;
 use std::error::Error;
 
@@ -33,11 +32,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("{:?}", result.result);
 
     let user = domain::user::User::new(String::from("test"), String::from("test@test.com"));
-
+    let hasher = Box::new(crypto::hasher::ArgonHasher {});
     let user_repo: Box<dyn domain::user_repo::UserRepo> =
-        Box::new(db::postgres::user_repo::PGUserRepo { conn_pool });
+        Box::new(db::postgres::user_repo::PGUserRepo::new(conn_pool, hasher));
 
-    user_repo.create(user);
+    let created_user = user_repo.create(user, String::from("test_pass")).await;
+    println!("{:?}", created_user.unwrap());
 
     Ok(())
 }

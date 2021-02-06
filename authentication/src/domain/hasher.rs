@@ -1,8 +1,8 @@
 use std::fmt;
 
 pub trait Hasher {
-    fn hash(password: String) -> String;
-    fn verify(password: String, hash: String) -> bool;
+    fn hash(&self, password: String) -> Result<String, HasherError>;
+    //fn verify(&self, password: String, hash: String) -> bool;
 }
 
 #[derive(Debug)]
