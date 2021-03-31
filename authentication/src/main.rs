@@ -1,6 +1,8 @@
+use actix_web::{rt::System, web, App, HttpResponse, HttpServer};
 use sqlx::postgres::PgPoolOptions;
 use std::error::Error;
 
+mod application;
 mod domain;
 mod infrastructure;
 use crate::infrastructure::crypto;
@@ -28,8 +30,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Box::new(db::postgres::user_repo::PGUserRepo::new(conn_pool, hasher));
 
     let user = domain::user::User::new(String::from("test"), String::from("test@test.com"));
-    let created_user = user_repo.create(user, String::from("test_pass")).await;
-    println!("{:?}", created_user.unwrap());
+    //let created_user = user_repo.create(user, String::from("test_pass")).await;
+    //println!("{:?}", created_user.unwrap());
+
+    let sys = System::new("http-server");
+
+    HttpServer::new(|| App::new().route("/", web::get().to(|| HttpResponse::Ok())))
+        .bind("127.0.0.1:8080")?
+        .run()
+        .await?;
+
+    sys.run()?;
 
     Ok(())
 }

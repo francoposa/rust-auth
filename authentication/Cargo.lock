@@ -1519,6 +1519,7 @@ dependencies = [
  "actix-web",
  "async-trait",
  "chrono",
+ "serde",
  "sodiumoxide",
  "sqlx",
  "uuid",
