@@ -35,10 +35,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let sys = System::new("http-server");
 
-    HttpServer::new(|| App::new().route("/", web::get().to(|| HttpResponse::Ok())))
-        .bind("127.0.0.1:8080")?
-        .run()
-        .await?;
+    let server = HttpServer::new(|| {
+        App::new().route(
+            "/",
+            web::get().to(application::server::health_handler::health),
+        )
+    })
+    .bind("127.0.0.1:8080")?;
+
+    println!("running http server on port 8080...");
+    server.run().await?;
 
     sys.run()?;
 
